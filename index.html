@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dominati0 on GitHub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: neural network runs inference across the whole background; hero + two instrument panels (online judge, training run) sit on top. */
+:root{
+  --bg:#05070b;
+  --panel:rgba(11,15,22,.78);
+  --fg:#e8edf5;
+  --muted:#7c8697;
+  --line:rgba(150,180,255,.13);
+  --ac:#3ddc84;
+  --wa:#ff5c6c;
+  --tle:#ffb547;
+  --neuron:#7aa2ff;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);overflow-x:hidden;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#net{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+.shade{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(90% 70% at 30% 35%,rgba(5,7,11,.7) 0%,rgba(5,7,11,.2) 60%,rgba(5,7,11,.5) 100%)}
+.wrap{position:relative;z-index:2;min-height:100%;max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:30px;padding-block:clamp(40px,10vh,110px) 32px}
+
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--panel)}
+.tag b{width:7px;height:7px;border-radius:50%;background:var(--ac)}
+.tag.ai b{background:var(--neuron)}
+.tag b{animation:pulse 2.4s infinite}
+.tag.ai b{animation-delay:1.2s}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.7)}}
+
+h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(3rem,12vw,7rem);line-height:.92;letter-spacing:-.035em}
+h1 .zero{color:transparent;-webkit-text-stroke:2px var(--neuron);display:inline-block;animation:spin0 9s cubic-bezier(.7,0,.3,1) infinite}
+@keyframes spin0{0%,82%{transform:rotateY(0)}92%,100%{transform:rotateY(360deg)}}
+.lede{margin:0;max-width:52ch;font-family:var(--display);font-weight:500;font-size:clamp(1rem,2.3vw,1.18rem);line-height:1.55;color:#b6bfcd}
+.lede em{font-style:normal;color:var(--ac)}
+
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{position:relative;display:inline-flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;font-family:var(--mono);font-size:.92rem;font-weight:500;
+  text-decoration:none;cursor:pointer;border:1px solid var(--line);transition:transform .2s ease,box-shadow .25s,border-color .25s}
+.btn:focus-visible{outline:2px solid var(--neuron);outline-offset:3px}
+.primary{background:var(--fg);color:var(--bg);border-color:var(--fg);overflow:hidden}
+.primary::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(122,162,255,.55) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.primary:hover::after{transform:translateX(120%)}
+.primary:hover{box-shadow:0 10px 40px -10px rgba(122,162,255,.75)}
+.primary svg{width:20px;height:20px}
+.ghost{background:var(--panel);color:var(--fg)}
+.ghost:hover{border-color:var(--neuron)}
+.ghost .k{color:var(--muted);font-size:.78rem}
+
+.panels{display:grid;grid-template-columns:minmax(0,560px);gap:16px;align-items:start}
+.panel{min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ph .live{display:inline-flex;align-items:center;gap:6px;color:var(--ac)}
+.ph .live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.2s steps(1) infinite}
+@keyframes blink{50%{opacity:.2}}
+
+.subs{list-style:none;margin:0;padding:6px 0;font-size:.8rem;font-variant-numeric:tabular-nums}
+.sub{display:grid;grid-template-columns:4.6rem minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;animation:slide .45s ease both}
+.sub + .sub{border-top:1px dashed rgba(150,180,255,.07)}
+@keyframes slide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.pid{color:var(--muted);white-space:nowrap}
+.pname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.verdict{font-weight:600;white-space:nowrap;text-align:right}
+.verdict small{display:block;font-weight:400;color:var(--muted);font-size:.7rem}
+.v-ac{color:var(--ac)} .v-wa{color:var(--wa)} .v-tle{color:var(--tle)} .v-run{color:var(--neuron)}
+
+.train{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-variant-numeric:tabular-nums}
+.metric{display:flex;flex-direction:column;gap:2px}
+.metric span{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.metric strong{font-size:1.05rem;font-weight:600}
+#loss{width:100%;height:110px;display:block}
+.legend{display:flex;gap:14px;font-size:.66rem;color:var(--muted);letter-spacing:.08em}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:6px}
+.code{margin:0;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.35);border:1px solid var(--line);font-size:.74rem;line-height:1.6;color:#c9d2e3;white-space:pre;overflow-x:auto;height:13.4em}
+.code .kw{color:#c792ea}.code .fn{color:var(--neuron)}.code .num{color:var(--tle)}.code .cm{color:#5d6878}
+.caret{display:inline-block;width:7px;height:1em;background:var(--fg);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+
+.foot{margin-top:auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:.7rem;color:var(--muted);letter-spacing:.06em}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:5;padding:10px 16px;border-radius:999px;background:var(--fg);color:var(--bg);font-size:.82rem;transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.rise{animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{transform:translateY(16px);opacity:.2}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:760px){.panels{grid-template-columns:1fr}.btn{flex:1 1 auto;justify-content:center}}
+.role{display:flex;align-items:center;gap:8px;font-size:.95rem;color:var(--muted);min-height:1.5em}
+.role .p{color:var(--neuron)}
+.role #role{color:var(--fg)}
+h1 .ch{display:inline-block}
+h1 .ch.scr{color:var(--neuron)}
+.primary::after{animation:shine 4.5s ease-in-out infinite 1.5s}
+@keyframes shine{0%,70%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+.sub.flash{animation:slide .45s ease both,acflash 1.4s ease}
+@keyframes acflash{0%{background:rgba(61,220,132,.28)}100%{background:transparent}}
+.spark{position:fixed;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:6}
+.glow{position:fixed;left:0;top:0;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;pointer-events:none;z-index:1;
+  background:radial-gradient(circle,rgba(122,162,255,.13),transparent 65%);transition:opacity .4s}
+.counter{font-variant-numeric:tabular-nums;color:var(--ac)}
+</style>
+</head>
+<body>
+
+
+<canvas id="net" aria-hidden="true"></canvas>
+<div class="shade"></div>
+<div class="glow" id="glow"></div>
+
+<main class="wrap">
+  <div class="tags rise">
+    <span class="tag"><b></b>CS student · semester 1</span>
+    <span class="tag ai"><b></b>learning CP &amp; AI</span>
+  </div>
+
+  <h1 class="rise" style="animation-delay:.08s" id="name" aria-label="Dominati0">Dominati<span class="zero">0</span></h1>
+  <div class="role rise" style="animation-delay:.12s"><span class="p">&gt;</span><span id="role">learning C++ one segfault at a time</span><span class="caret"></span></div>
+  <p class="lede rise" style="animation-delay:.16s">First-semester CS student, just getting into competitive programming and curious about AI. Still collecting my first <em>Accepted</em>s.</p>
+
+  <div class="actions rise" style="animation-delay:.24s">
+    <a class="btn primary magnetic" href="https://github.com/Dominati0" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.530 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Visit GitHub
+    </a>
+    <button class="btn ghost magnetic" id="copy" type="button">Copy link <span class="k">github.com/Dominati0</span></button>
+  </div>
+
+  <section class="panels rise" style="animation-delay:.32s">
+    <div class="panel">
+      <div class="ph"><span>my submissions · <span class="counter" id="acCount">0</span> AC</span><span class="live">live</span></div>
+      <ul class="subs" id="subs"></ul>
+    </div>
+  </section>
+
+  <div class="foot"><span>currently: fixing off-by-one errors</span><span>tap anywhere to fire a neuron</span></div>
+</main>
+<div class="toast" id="toast">Link copied</div>
+
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* copy + magnetic */
+const toast = document.getElementById('toast');
+document.getElementById('copy').addEventListener('click', () => {
+  const url = "https://github.com/Dominati0";
+  const show = t => { toast.textContent = t; toast.classList.add('on'); setTimeout(()=>toast.classList.remove('on'), 1800); };
+  navigator.clipboard?.writeText(url).then(() => show("Link copied")).catch(() => show(url));
+});
+if(!reduce && matchMedia('(hover:hover)').matches){
+  document.querySelectorAll('.magnetic').forEach(b => {
+    b.addEventListener('mousemove', e => { const r = b.getBoundingClientRect();
+      b.style.transform = `translate(${(e.clientX-r.left-r.width/2)*.18}px,${(e.clientY-r.top-r.height/2)*.3}px)`; });
+    b.addEventListener('mouseleave', () => b.style.transform = '');
+  });
+}
+
+/* neural network background */
+const cv = document.getElementById('net'), ctx = cv.getContext('2d');
+let W, H, layers = [], edges = [], pulses = [], mouse = {x:-1e4, y:-1e4};
+function build(){
+  const DPR = Math.min(devicePixelRatio||1, 2); W = innerWidth; H = innerHeight;
+  cv.width = W*DPR; cv.height = H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  const portrait = H > W;
+  const sizes = portrait ? [3,5,5,3] : [4,6,6,4,2];
+  layers = sizes.map((n, li) => Array.from({length:n}, (_, ni) => {
+    const a = (li + .5) / sizes.length, b = (ni + .5) / n;
+    const base = portrait ? {x: W*(.08 + .84*b), y: H*(.06 + .9*a)} : {x: W*(.05 + .9*a), y: H*(.1 + .8*b)};
+    return {bx:base.x, by:base.y, x:base.x, y:base.y, ph:Math.random()*6.28, act:0, li, outs:[]};
+  }));
+  edges = []; pulses = [];
+  for(let l=0;l<layers.length-1;l++) for(const a of layers[l]) for(const b of layers[l+1])
+    if(Math.random() < .7){ const e = {a, b, w:Math.random()*2-1}; edges.push(e); a.outs.push(e); }
+}
+addEventListener('resize', build); build();
+
+function fire(n){
+  n.act = 1;
+  for(const e of n.outs) if(Math.random() < .5) pulses.push({e, p:0, v:.012 + Math.random()*.01});
+}
+let lastFire = -1e4;
+function drawNet(t){
+  ctx.clearRect(0,0,W,H);
+  for(const L of layers) for(const n of L){
+    if(!reduce){ n.x = n.bx + Math.sin(t*.0004 + n.ph)*10; n.y = n.by + Math.cos(t*.0005 + n.ph)*10; }
+    if(Math.hypot(n.x-mouse.x, n.y-mouse.y) < 70 && n.act < .3) fire(n);
+    n.act *= .95;
+  }
+  for(const e of edges){
+    const glow = Math.max(e.a.act, e.b.act);
+    ctx.strokeStyle = e.w > 0 ? `rgba(122,162,255,${.1 + glow*.45})` : `rgba(61,220,132,${.07 + glow*.4})`;
+    ctx.lineWidth = .6 + Math.abs(e.w)*.6;
+    ctx.beginPath(); ctx.moveTo(e.a.x, e.a.y); ctx.lineTo(e.b.x, e.b.y); ctx.stroke();
+  }
+  if(!reduce && t - lastFire > 1300){ lastFire = t; layers[0].forEach(n => Math.random() < .5 && fire(n)); }
+  pulses = pulses.filter(pu => {
+    pu.p += pu.v;
+    const {a, b} = pu.e;
+    if(pu.p >= 1){ if(Math.random() < .6) fire(b); else b.act = Math.max(b.act,.5); return false; }
+    const x = a.x + (b.x-a.x)*pu.p, y = a.y + (b.y-a.y)*pu.p;
+    const g = ctx.createRadialGradient(x,y,0,x,y,7);
+    g.addColorStop(0,'rgba(210,222,255,.95)'); g.addColorStop(1,'rgba(122,162,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,7,0,6.28); ctx.fill();
+    return true;
+  });
+  if(pulses.length > 350) pulses.splice(0, pulses.length-350);
+  for(const L of layers) for(const n of L){
+    const r = 3.2 + n.act*3;
+    if(n.act > .05){ ctx.fillStyle = `rgba(122,162,255,${n.act*.22})`; ctx.beginPath(); ctx.arc(n.x,n.y,r*4,0,6.28); ctx.fill(); }
+    ctx.fillStyle = n.li === layers.length-1 ? `rgba(61,220,132,${.5+n.act*.5})` : `rgba(210,222,255,${.35+n.act*.65})`;
+    ctx.beginPath(); ctx.arc(n.x,n.y,r,0,6.28); ctx.fill();
+  }
+}
+addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+addEventListener('pointerleave', () => { mouse.x = mouse.y = -1e4; });
+
+/* online judge feed */
+const problems = [
+  ["CF 4A","Watermelon"],["CF 71A","Way Too Long Words"],["CF 231A","Team"],
+  ["LC 1","Two Sum"],["CSES 1068","Weird Algorithm"],["CF 158A","Next Round"],
+  ["CF 282A","Bit++"],["CSES 1083","Missing Number"],["CF 263A","Beautiful Matrix"],
+  ["LC 704","Binary Search"],["CF 50A","Domino piling"],["CSES 1069","Repetitions"]
+];
+const subsEl = document.getElementById('subs');
+const MAX = 5; let pi = 0, acCount = 0;
+function addSub(instant){
+  const [id, name] = problems[pi++ % problems.length];
+  const li = document.createElement('li'); li.className = 'sub';
+  li.innerHTML = '<span class="pid"></span><span class="pname"></span><span class="verdict v-run">Running<small>test 1</small></span>';
+  li.querySelector('.pid').textContent = id; li.querySelector('.pname').textContent = name;
+  subsEl.prepend(li);
+  while(subsEl.children.length > MAX) subsEl.lastElementChild.remove();
+  const v = li.querySelector('.verdict');
+  const total = 8 + Math.floor(Math.random()*25);
+  const failAt = Math.random() < .6 ? Infinity : 3 + Math.floor(Math.random()*(total-3));
+  let test = 1;
+  const step = () => {
+    if(test >= failAt){
+      const tle = Math.random() < .5;
+      v.className = 'verdict ' + (tle ? 'v-tle' : 'v-wa');
+      v.innerHTML = (tle ? 'Time limit' : 'Wrong answer') + `<small>on test ${test}</small>`; return;
+    }
+    if(test >= total){
+      v.className = 'verdict v-ac'; acCount++; document.getElementById('acCount').textContent = acCount;
+      if(!instant){ li.classList.add('flash'); const r = v.getBoundingClientRect(); sparks(r.left + r.width/2, r.top + r.height/2, '#3ddc84'); }
+      v.innerHTML = `Accepted<small>${15 + Math.floor(Math.random()*400)} ms · ${(1 + Math.random()*60).toFixed(1)} MB</small>`; return;
+    }
+    test = Math.min(total, test + 1 + Math.floor(Math.random()*4));
+    v.querySelector('small').textContent = 'test ' + test;
+    if(instant) step(); else setTimeout(step, 60 + Math.random()*90);
+  };
+  if(instant) step(); else setTimeout(step, 300);
+}
+for(let i=0;i<MAX;i++) addSub(true);
+if(!reduce) setInterval(() => addSub(false), 3200);
+
+
+/* name decode / scramble */
+const nameEl = document.getElementById('name');
+const NAME = "Dominati";
+const GLYPHS = "01<>{}[]#$%&*+=ABCDEFXYZ";
+nameEl.innerHTML = NAME.split('').map(c => `<span class="ch">${c}</span>`).join('') + '<span class="zero">0</span>';
+const chs = [...nameEl.querySelectorAll('.ch')];
+function scramble(){
+  if(reduce) return;
+  let f = 0;
+  const iv = setInterval(() => {
+    chs.forEach((el, i) => {
+      if(f > i*2 + 6){ el.textContent = NAME[i]; el.classList.remove('scr'); }
+      else { el.textContent = GLYPHS[Math.floor(Math.random()*GLYPHS.length)]; el.classList.add('scr'); }
+    });
+    if(++f > NAME.length*2 + 8) clearInterval(iv);
+  }, 45);
+}
+scramble(); setInterval(scramble, 9000);
+
+/* rotating role line */
+const roles = ["learning C++ one segfault at a time","solving my first Div. 3","training a tiny MNIST model","reading about neural networks","fighting with recursion","git push --force (sorry)"];
+const roleEl = document.getElementById('role');
+if(!reduce){
+  let ri = 0, pos = roles[0].length, del = false;
+  (function tick(){
+    const r = roles[ri];
+    if(!del){ pos++; if(pos > r.length){ del = true; setTimeout(tick, 2200); return; } }
+    else { pos -= 2; if(pos <= 0){ pos = 0; del = false; ri = (ri+1) % roles.length; } }
+    roleEl.textContent = roles[ri].slice(0, Math.max(0,pos));
+    setTimeout(tick, del ? 25 : 45 + Math.random()*55);
+  })();
+}
+
+/* cursor glow + ambient wanderer (keeps the network alive on phones) */
+const glow = document.getElementById('glow');
+let lastMove = -1e4;
+addEventListener('pointermove', e => { lastMove = performance.now(); glow.style.transform = `translate(${e.clientX}px,${e.clientY}px)`; });
+const wander = {x:0, y:0};
+
+/* tap = fire nearest neuron + sparks */
+addEventListener('pointerdown', e => {
+  if(e.target.closest('a,button')) return;
+  let best = null, bd = 1e9;
+  for(const L of layers) for(const n of L){ const d = Math.hypot(n.x-e.clientX, n.y-e.clientY); if(d < bd){ bd = d; best = n; } }
+  if(best){ fire(best); best.outs.forEach(o => pulses.push({e:o, p:0, v:.02})); }
+  sparks(e.clientX, e.clientY, '#7aa2ff');
+});
+function sparks(x, y, color){
+  if(reduce) return;
+  for(let i=0;i<14;i++){
+    const s = document.createElement('div'); s.className = 'spark'; s.style.background = color;
+    s.style.left = x+'px'; s.style.top = y+'px'; document.body.appendChild(s);
+    const a = Math.random()*6.28, d = 30 + Math.random()*50;
+    s.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0)`,opacity:0}],
+      {duration:600 + Math.random()*300, easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish = () => s.remove();
+  }
+}
+
+function loop(t){
+  if(!reduce && t - lastMove > 2500){
+    wander.x = W*(.5 + .42*Math.sin(t*.00031)); wander.y = H*(.5 + .4*Math.sin(t*.00047 + 1));
+    mouse.x = wander.x; mouse.y = wander.y;
+    glow.style.transform = `translate(${wander.x}px,${wander.y}px)`;
+  }
+  drawNet(t); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
